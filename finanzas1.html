@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Finanzas Pro 2026</title>
+    <link rel="stylesheet" href="style.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+
+    <div class="main-layout">
+        <div class="container">
+            <header class="period-selector">
+                <button onclick="changePeriod(-1)">◀ Ant.</button>
+                <div class="period-info">
+                    <small>Quincena Iniciando el</small>
+                    <div class="jump-selector">
+                        <select id="period-dropdown" onchange="jumpToPeriod(this.value)"></select>
+                    </div>
+                    <span id="range-label"></span>
+                </div>
+                <button onclick="changePeriod(1)">Sig. ▶</button>
+            </header>
+
+            <div class="actions-bar">
+                <button onclick="openBudgetModal()" class="btn-budget">🎯 Definir Presupuesto</button>
+                <button onclick="generateAnnualReport()" class="btn-report">📊 Resumen Anual</button>
+                <button onclick="openConfigModal()" class="btn-config-action">⚙️ Config. Ciclo</button>
+            </div>
+
+            <form id="finance-form">
+                <input type="hidden" id="edit-index" value="-1">
+                <div class="form-group">
+                    <input type="text" id="desc" placeholder="Descripción" required>
+                    <input type="number" id="amount" placeholder="Monto $" step="0.01" required>
+                </div>
+                <div class="form-group">
+                    <input type="date" id="date" required>
+                    <select id="type" onchange="toggleCategories()">
+                        <option value="ingreso">Ingreso</option>
+                        <option value="egreso">Egreso</option>
+                    </select>
+                </div>
+                <div id="category-container" class="hidden">
+                    <select id="category">
+                        <option value="GASOLINA">GASOLINA</option>
+                        <option value="GASTOS PASIVOS RENTA">GASTOS PASIVOS RENTA</option>
+                        <option value="AHORRO">AHORRO</option>
+                        <option value="CONSUMO DIVERSION">CONSUMO DIVERSION</option>
+                        <option value="OTROS">OTROS</option>
+                    </select>
+                </div>
+                <div class="form-btns">
+                    <button type="submit" id="submit-btn" class="btn-save">Registrar Movimiento</button>
+                    <button type="button" id="cancel-edit-btn" class="btn-cancel hidden" onclick="resetForm()">Cancelar</button>
+                </div>
+            </form>
+
+            <div class="search-box">
+                <input type="text" id="search-input" placeholder="🔍 Buscar en esta quincena..." oninput="updateUI()">
+            </div>
+            <ul id="list"></ul>
+        </div>
+
+        <aside class="summary-panel">
+            <h3>Balance de la Quincena</h3>
+            <div class="summary-item"><span>Ingresos Reales:</span> <span id="sum-ingresos" class="text-success">$0</span></div>
+            <div class="summary-item"><span>Egresos Reales:</span> <span id="sum-egresos" class="text-danger">$0</span></div>
+            <div class="summary-item total"><span>Neto:</span> <span id="sum-neto">$0</span></div>
+            <hr>
+            <div class="chart-wrapper">
+                <p class="chart-title">Comparativa vs Presupuesto</p>
+                <canvas id="barChart"></canvas>
+            </div>
+            <div class="chart-wrapper">
+                <p class="chart-title">Distribución de Gastos</p>
+                <canvas id="pieChart"></canvas>
+            </div>
+            <button id="clear-all" class="btn-danger-outline" onclick="clearAllData()">Borrar Todo el Historial</button>
+        </aside>
+    </div>
+
+    <div id="budget-modal" class="modal hidden">
+        <div class="modal-content">
+            <h3>🎯 Metas del Periodo</h3>
+            <label>Meta de Ingresos ($):</label>
+            <input type="number" id="budget-income" step="0.01">
+            <label>Límite de Egresos ($):</label>
+            <input type="number" id="budget-expense" step="0.01">
+            <div class="modal-btns">
+                <button onclick="saveBudget()" class="btn-save">Guardar</button>
+                <button onclick="closeBudgetModal()" class="btn-cancel">Cerrar</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="report-modal" class="modal hidden">
+        <div class="modal-content report-content">
+            <h3>📊 Resumen Anual 2026</h3>
+            <div class="table-container">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Quincena</th>
+                            <th>Ing. Real</th>
+                            <th>Egr. Real</th>
+                            <th>Meta Ing.</th>
+                            <th>Lím. Egr.</th>
+                            <th>Dif. Ing.</th>
+                            <th>Dif. Egr.</th>
+                        </tr>
+                    </thead>
+                    <tbody id="report-body"></tbody>
+                </table>
+            </div>
+
+            <div class="final-balance-card" id="annual-balance-box">
+                <h4>Balance Neto Real Anual</h4>
+                <div id="annual-net-result" class="net-amount">$0.00</div>
+            </div>
+
+            <button onclick="closeReportModal()" class="btn-cancel" style="width:100%; margin-top:15px;">Cerrar</button>
+        </div>
+    </div>
+
+    <div id="config-modal" class="modal hidden">
+        <div class="modal-content">
+            <h3>⚙️ Configuración de Ciclo</h3>
+            <p style="font-size: 0.85em; color: #666; margin-bottom: 10px;">Día de inicio de la primera quincena:</p>
+            <input type="date" id="base-start-date" style="width: 100%; margin-bottom: 20px;">
+            <div class="modal-btns">
+                <button onclick="updateBaseStartDate()" class="btn-save">Aplicar Cambios</button>
+                <button onclick="closeConfigModal()" class="btn-cancel">Cerrar</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
